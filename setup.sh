@@ -148,10 +148,10 @@ git clone https://github.com/nodenv/node-build.git $(nodenv root)/plugins/node-b
 
 nodenv install "${B_NODE_VERSION}"
 nodenv global "${B_NODE_VERSION}"
-sudo apt-get install --no-install-recommends yarn
+sudo apt-get -y install --no-install-recommends yarn
 
 # Install VS Code and the sync setting extension
-sudo apt-get install code
+sudo apt-get -y install code
 code --install-extension Shan.code-settings-sync
 
 # Link the dotfiles to home directory

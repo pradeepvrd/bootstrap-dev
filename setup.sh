@@ -1,7 +1,9 @@
 #!/bin/bash
 set -e
+sudo true
 
 source ./dotfiles/env.vars
+sudo apt-get -y install curl
 
 # Add the necessary repos
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
@@ -16,18 +18,20 @@ if [ $(lsb_release -cs) == "bionic" ]; then
    "deb [arch=amd64] https://download.docker.com/linux/ubuntu artful stable"
 fi
 
-curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+curl -fsSL https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
 echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+
+curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | sudo apt-key add -
+echo "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main" | sudo tee /etc/apt/sources.list.d/vscode.list
 
 # Install all the required packages
 sudo apt-get update
-sudo apt-get install zsh \
+sudo apt-get -y install zsh \
                     libssl-dev \
                     zlib1g-dev \
                     libbz2-dev \
                     libreadline-dev \
                     libsqlite3-dev \
-                    curl \
                     build-essential \
                     gcc \
                     g++ \
@@ -46,6 +50,19 @@ chsh -s /bin/zsh
 
 # Create a local bin directory for installing scripts/symlinks
 mkdir -p ${B_LOCAL_BIN_DIR}
+
+# Install dokcer scripts
+COMPOSE_VERSION=`git ls-remote https://github.com/docker/compose \
+  | grep refs/tags \
+  | grep -oP "[0-9]+\.[0-9][0-9]+\.[0-9]+$" \
+  | tail -n 1`
+
+curl -L https://github.com/docker/compose/releases/download/$(COMPOSE_VERSION)/docker-compose-$(uname -s)-$(uname -m) \
+  -o ${B_LOCAL_BIN_DIR}/docker-compose
+cp scripts/docker-cleanup ${B_LOCAL_BIN_DIR}/docker-cleanup
+
+chmod +x ${B_LOCAL_BIN_DIR}/docker-compose
+chmod +x ${B_LOCAL_BIN_DIR}/docker-cleanup
 
 # Create directory for workspace
 if [ ! -d "${B_WORKSPACE_DIR}" ]; then mkdir -p "${B_WORKSPACE_DIR}"; fi
@@ -100,6 +117,9 @@ mkdir -p ${B_WORKSPACE_DIR}/go/pkg
 mkdir -p ${B_WORKSPACE_DIR}/go/bin
 mkdir -p ${B_WORKSPACE_DIR}/go/src
 
+export GOPATH="${B_WORKSPACE_DIR}/go"
+export GOBIN="${GOPATH}/bin"
+
 # Install dep for dependency management
 curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 ln -s ${GOPATH}/bin/dep ${B_LOCAL_BIN_DIR}/dep
@@ -127,10 +147,15 @@ mkdir -p "$(nodenv root)"/plugins
 git clone https://github.com/nodenv/node-build.git $(nodenv root)/plugins/node-build
 
 nodenv install "${B_NODE_VERSION}"
-nodenv global "${B_RUBY_VERSION}"
+nodenv global "${B_NODE_VERSION}"
 sudo apt-get install --no-install-recommends yarn
+
+# Install VS Code and the sync setting extension
+sudo apt-get install code
+code --install-extension Shan.code-settings-sync
 
 # Link the dotfiles to home directory
 ln -sf dotfiles/zshrc ~/.zshrc
 ln -sf dotfiles/zpreztorc ~/.zpreztorc
 ln -sf dotfiles/env.vars ~/.env.vars
+

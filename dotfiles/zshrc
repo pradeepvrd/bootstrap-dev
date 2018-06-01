@@ -1,0 +1,28 @@
+#
+# Executes commands at the start of an interactive session.
+#
+# Authors:
+#   Sorin Ionescu <sorin.ionescu@gmail.com>
+#
+
+# Source Prezto.
+if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
+  source "${ZDOTDIR:-$HOME}/.zprezto/init.zsh"
+fi
+
+# Source variables 
+source ~/.env.vars
+export PATH="${B_LOCAL_BIN_DIR}:${PATH}"
+
+# Python Settings
+export WORKON_HOME=${B_PYTHON_VENV_DIR}
+export PROJECT_HOME=${B_WORKSPACE_DIR}
+
+# GO language settings
+export GOENV_ROOT="${HOME}/.goenv"
+export PATH="${GOENV_ROOT}/bin:${PATH}"
+if command -v goenv 1>/dev/null 2>&1; then
+  eval "$(goenv init -)"
+fi
+export GOPATH="${B_WORKSPACE_DIR}/go"
+

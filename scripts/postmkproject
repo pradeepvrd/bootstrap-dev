@@ -1,9 +1,11 @@
 #!/bin/bash
 # This hook is sourced after a new python project is created and activated.
 
-cp ${SCRIPTS_DIR}/pylintrc $(pwd)/.pylintrc
+cp ${DOTFILES_DIR}/pylintrc $(pwd)/.pylintrc
 mkdir -p hooks
 cp ${SCRIPTS_DIR}/pre-commit $(pwd)/hooks/pre-commit
 cp ${SCRIPTS_DIR}/install-hooks.sh $(pwd)/hooks/install-hooks.sh
 git init
 ./hooks/install-hooks.sh
+
+# read -r fails if no newline for last line

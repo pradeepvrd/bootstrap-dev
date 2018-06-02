@@ -175,7 +175,7 @@ sudo apt-get -y install code
 code --install-extension Shan.code-settings-sync
 
 # Link the dotfiles to home directory
-ln -sf ${DOTFILES_DIR}/dotfiles/zshrc ~/.zshrc
-ln -sf ${DOTFILES_DIR}/dotfiles/zpreztorc ~/.zpreztorc
-ln -sf ${DOTFILES_DIR}/dotfiles/env.vars ~/.env.vars
+ln -sf ${DOTFILES_DIR}/zshrc ~/.zshrc
+ln -sf ${DOTFILES_DIR}/zpreztorc ~/.zpreztorc
+ln -sf ${DOTFILES_DIR}/env.vars ~/.env.vars
 

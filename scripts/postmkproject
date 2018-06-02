@@ -2,6 +2,7 @@
 # This hook is sourced after a new python project is created and activated.
 
 cp ${DOTFILES_DIR}/pylintrc $(pwd)/.pylintrc
+sed -i -e 's#${WORKSPACE_DIR}#'"$(pwd)"'#' $(pwd)/.pylintrc
 mkdir -p hooks
 cp ${SCRIPTS_DIR}/pre-commit $(pwd)/hooks/pre-commit
 cp ${SCRIPTS_DIR}/install-hooks.sh $(pwd)/hooks/install-hooks.sh

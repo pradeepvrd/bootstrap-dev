@@ -2,6 +2,20 @@
 set -e
 sudo true
 
+env_sub() {
+  while read -r line ; do
+    while [[ "$line" =~ (\$\{[a-zA-Z_][a-zA-Z_0-9]*\}) ]] ; do
+        LHS=${BASH_REMATCH[1]}
+        RHS="$(eval echo "\"$LHS\"")"
+        line=${line//$LHS/$RHS}
+    done
+    echo "$line"
+  done
+}
+
+SCRIPTS_DIR="$( cd "$( dirname "$0" )" && pwd )/scripts"
+DOTFILES_DIR="$( cd "$( dirname "$0" )" && pwd )/dotfiles"
+
 source ./dotfiles/env.vars
 sudo apt-get -y install curl
 
@@ -51,15 +65,15 @@ chsh -s /bin/zsh
 # Create a local bin directory for installing scripts/symlinks
 mkdir -p ${B_LOCAL_BIN_DIR}
 
-# Install dokcer scripts
+# Install docker scripts
 COMPOSE_VERSION=`git ls-remote https://github.com/docker/compose \
   | grep refs/tags \
   | grep -oP "[0-9]+\.[0-9][0-9]+\.[0-9]+$" \
   | tail -n 1`
 
-curl -L https://github.com/docker/compose/releases/download/$(COMPOSE_VERSION)/docker-compose-$(uname -s)-$(uname -m) \
+curl -L https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m) \
   -o ${B_LOCAL_BIN_DIR}/docker-compose
-cp scripts/docker-cleanup ${B_LOCAL_BIN_DIR}/docker-cleanup
+cp ${SCRIPTS_DIR}/docker-cleanup ${B_LOCAL_BIN_DIR}/docker-cleanup
 
 chmod +x ${B_LOCAL_BIN_DIR}/docker-compose
 chmod +x ${B_LOCAL_BIN_DIR}/docker-cleanup
@@ -102,7 +116,13 @@ pyenv deactivate
 pyenv global "${B_PYTHON3_VERSION}" "${B_PYTHON2_VERSION}" jupyter3 ipython2 tools3 tools2
 
 ipython profile create
-cp scripts/00-detect-virtualenv-sitepackages.py ~/.ipython/profile_default/startup
+cp ${SCRIPTS_DIR}/00-detect-virtualenv-sitepackages.py ~/.ipython/profile_default/startup
+
+
+# Setup virtualenvwrapper hooks
+# Create an test virtualenv and remove it to set up all the hooks scripts
+env_sub < ${SCRIPTS_DIR}/postmkproject >> ${B_PYTHON_VENV_DIR}/postmkproject
+env_sub < ${SCRIPTS_DIR}/postmkvirtualenv >> ${B_PYTHON_VENV_DIR}/postmkvirtualenv
 
 # Install and configure golang environment
 git clone https://github.com/syndbg/goenv.git ~/.goenv
@@ -155,7 +175,7 @@ sudo apt-get -y install code
 code --install-extension Shan.code-settings-sync
 
 # Link the dotfiles to home directory
-ln -sf $(pwd)/dotfiles/zshrc ~/.zshrc
-ln -sf $(pwd)/dotfiles/zpreztorc ~/.zpreztorc
-ln -sf $(pwd)/dotfiles/env.vars ~/.env.vars
+ln -sf ${DOTFILES_DIR}/dotfiles/zshrc ~/.zshrc
+ln -sf ${DOTFILES_DIR}/dotfiles/zpreztorc ~/.zpreztorc
+ln -sf ${DOTFILES_DIR}/dotfiles/env.vars ~/.env.vars
 

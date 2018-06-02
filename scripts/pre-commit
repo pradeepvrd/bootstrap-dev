@@ -1,0 +1,106 @@
+#! /usr/bin/env python
+"""Git pre-commit hook to run pylint and autopep8 on python files.
+"""
+
+from subprocess import check_output, CalledProcessError
+import sys
+from os.path import isfile
+
+# don't fill in both of these
+SELECT_CODES = []
+IGNORE_CODES = ["E121", "E122", "E123", "E124", "E125",
+                "E126", "E127", "E128", "E129", "E131", "E501"]
+# Add things like "--max-line-length=120" below
+OVERRIDES = ["--max-line-length=100"]
+
+SUCCESS = 0
+GIT_DIFF_ERROR = 1
+PYLINT_ERRORS = 2
+AUTOPEP8_ERROR = 3
+
+PYLINTRC = ".pylintrc"
+
+
+def _print_error(message):
+    """Print an error message to stderr."""
+    if isinstance(message, bytes):
+        print(message.decode('utf-8'), file=sys.stderr)
+    else:
+        print(message)
+
+
+def _is_python_script(filename):
+    """Return true for *.py files and python scripts ("#! /path/to/python")."""
+    if not isfile(filename):
+        return False
+
+    if not filename.endswith(b".py"):
+        try:
+            with open(filename, "rb") as contents:
+                first_line = contents.readline()
+        except OSError:
+            return False
+
+        # Check shebang.
+        if not (first_line.startswith(b"#!") and b"python" in first_line):
+            return False
+
+    return True
+
+
+def pylint(changed_files):
+    if changed_files:
+        try:
+            check_output(
+                ["pylint", "--rcfile={}".format(PYLINTRC), ] + changed_files)
+        except CalledProcessError as error:
+            _print_error(error.output)
+            _print_error("pylint returned errors, aborting commit.")
+            sys.exit(PYLINT_ERRORS)
+
+
+def autopep8(changed_files):
+    args = ['autopep8', '--in-place']
+
+    if SELECT_CODES and IGNORE_CODES:
+        print(u'Error: select and ignore codes are mutually exclusive')
+        sys.exit(AUTOPEP8_ERROR)
+    elif SELECT_CODES:
+        args.extend(('--select', ','.join(SELECT_CODES)))
+    elif IGNORE_CODES:
+        args.extend(('--ignore', ','.join(IGNORE_CODES)))
+    args.extend(OVERRIDES)
+    for name in changed_files:
+        try:
+            check_output(args + [name])
+        except CalledProcessError:
+            _print_error('Unable to run autopep8')
+            sys.exit(AUTOPEP8_ERROR)
+        check_output(["git", "add", name])
+
+
+def run():
+    """Verify changed python files using pylint."""
+    # Get all changed files' paths.
+    try:
+        changed_files = check_output(
+            ["git", "diff", "--staged", "--name-only", "HEAD", ])
+    except CalledProcessError:
+        _print_error("Couldn't get list of changed files")
+        sys.exit(GIT_DIFF_ERROR)
+
+    # Limit checks to python scripts only.
+    changed_files = [
+        filename for filename
+        in changed_files.splitlines()
+        if _is_python_script(filename)]
+
+    pylint(changed_files)
+    autopep8(changed_files)
+
+
+if __name__ == "__main__":
+    print('Starting pre-commit tasks')
+    run()
+    print('Completed pre-commit tasks')
+    sys.exit(SUCCESS)

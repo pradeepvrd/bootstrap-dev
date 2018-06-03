@@ -155,7 +155,7 @@ git clone https://github.com/rbenv/ruby-build.git "$(rbenv root)"/plugins/ruby-b
 
 rbenv install "${B_RUBY_VERSION}"
 rbenv global "${B_RUBY_VERSION}"
-gem install bundler
+gem install bundler ruby-lint rubocop solargraph ruby-debug-ide debase
 
 # Node Environment
 git clone https://github.com/nodenv/nodenv.git ~/.nodenv
@@ -169,6 +169,7 @@ git clone https://github.com/nodenv/node-build.git $(nodenv root)/plugins/node-b
 nodenv install "${B_NODE_VERSION}"
 nodenv global "${B_NODE_VERSION}"
 sudo apt-get -y install --no-install-recommends yarn
+yarn global add eslint
 
 # Install VS Code and the sync setting extension
 sudo apt-get -y install code

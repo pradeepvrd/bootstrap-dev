@@ -1,6 +1,6 @@
 #!/bin/bash
 # This hook is sourced after a new virtualenv is created and activated.
 
-pip install autopep8 pylint
+pip install autopep8 pylint pep8
 
 # read -r fails if no newline for last line
